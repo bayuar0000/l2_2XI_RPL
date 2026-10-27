@@ -56,7 +56,48 @@ ed.addEventListener("input",()=>{code=ed.value;preview()});
 function check(){code=ed.value;let ok=bugs[cur][3](code);fixed[cur]=ok;fb.className="feedback "+(ok?"good":"bad");fb.textContent=ok?"✅ Bug berhasil diperbaiki.":"❌ Belum tepat. Ikuti penjelasan bug dan periksa kembali.";render();preview();if(fixed.every(Boolean))complete()}
 function reset(){code=initial;fixed=Array(15).fill(false);cur=0;render();preview()}
 function preview(){prev.srcdoc=code}
-async function send(auto=false){if(saving)return;saving=true;let n=fixed.filter(Boolean).length,p=Math.round(n/15*100),data={nama:student,progress:p,jumlahBenar:n,totalBug:15,status:n===15?"Selesai":"Progress",waktu:new Date().toLocaleString("id-ID"),detail:fixed.map((v,i)=>`${i+1}:${v?"Benar":"Belum"}`).join(" | ")};try{if(GOOGLE_SCRIPT_URL.includes("PASTE_URL")){alert("Tempel URL Apps Script /exec pada GOOGLE_SCRIPT_URL di index.html.");saving=false;return}await fetch(GOOGLE_SCRIPT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(data)});if(!auto)alert("Progress dikirim. Periksa spreadsheet untuk memastikan data masuk.")}catch(e){alert("Gagal mengirim. Periksa URL dan deployment Apps Script.")}saving=false}
+function send(auto=false){
+  if(saving)return;
+  if(!student){if(!auto)alert("Nama siswa belum tersedia. Mulai game dan isi nama terlebih dahulu.");return;}
+  if(!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("PASTE_URL")){
+    if(!auto)alert("URL Apps Script belum diisi. Tempel URL Web App yang berakhiran /exec pada GOOGLE_SCRIPT_URL.");
+    return;
+  }
+  saving=true;
+  const n=fixed.filter(Boolean).length;
+  const p=Math.round(n/15*100);
+  const data={nama:student,progress:p,jumlahBenar:n,totalBug:15,status:n===15?"Selesai":"Progress",waktu:new Date().toLocaleString("id-ID"),detail:fixed.map((v,i)=>`${i+1}:${v?"Benar":"Belum"}`).join(" | ")};
+  const callbackName="__debugSaveCallback"+Date.now();
+  const script=document.createElement("script");
+  let finished=false;
+  const cleanup=()=>{finished=true;delete window[callbackName];if(script.parentNode)script.parentNode.removeChild(script);clearTimeout(timer);saving=false;};
+  window[callbackName]=(result)=>{
+    if(finished)return;
+    cleanup();
+    if(result&&result.status==="success"){
+      if(!auto)alert("✅ Berhasil! Hasil telah disimpan ke Google Sheets.");
+    }else{
+      const message=(result&&result.message)?result.message:"Apps Script tidak mengonfirmasi penyimpanan.";
+      if(!auto)alert("❌ Hasil belum tersimpan. Pesan: "+message);
+      else {res.innerHTML+=`<p class="bad">Pengiriman otomatis belum terkonfirmasi: ${message}</p>`;}
+    }
+  };
+  const timer=setTimeout(()=>{
+    if(finished)return;
+    cleanup();
+    if(!auto)alert("⏳ Tidak ada konfirmasi dari Apps Script. Periksa URL /exec, deployment, izin akses, dan Google Sheets sebelum mencoba lagi.");
+    else {res.innerHTML+=`<p class="bad">Penyimpanan otomatis belum terkonfirmasi. Periksa URL Apps Script dan spreadsheet.</p>`;}
+  },15000);
+  script.onerror=()=>{
+    if(finished)return;
+    cleanup();
+    if(!auto)alert("❌ Tidak dapat menghubungi Apps Script. Periksa URL Web App dan deployment.");
+    else {res.innerHTML+=`<p class="bad">Tidak dapat menghubungi Apps Script. Hasil belum terkonfirmasi tersimpan.</p>`;}
+  };
+  const query=new URLSearchParams({action:"save",callback:callbackName,data:JSON.stringify(data),_:String(Date.now())});
+  script.src=GOOGLE_SCRIPT_URL+(GOOGLE_SCRIPT_URL.includes("?")?"&":"?")+query.toString();
+  document.body.appendChild(script);
+}
 function complete(){if(sent)return;sent=true;res.innerHTML=`<p>Nama: <b>${student}</b></p><p>Nilai: <b>100/100</b></p><p>15 bug berhasil diperbaiki: 10 CSS dan 5 HTML. Hasil otomatis dikirim.</p>`;show("result");send(true)}
 function run(){if(!fixed.every(Boolean))return alert("Perbaiki semua 15 bug sampai 100% terlebih dahulu.");alert("🎮 Semua bug HTML dan CSS telah diperbaiki. Game dapat dijalankan!")}
 </script></body></html>
