@@ -1,0 +1,764 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSS Debugging Challenge — Level 4</title>
+<style>
+:root {
+  --bg: #0b1020;
+  --panel: #141d32;
+  --panel2: #1b2740;
+  --text: #edf3ff;
+  --muted: #a5b4cf;
+  --primary: #7c9cff;
+  --green: #43d9a3;
+  --red: #ff7185;
+  --border: #30405e;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Inter, system-ui, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+button, input, textarea { font: inherit; }
+button {
+  border: 0;
+  border-radius: 10px;
+  padding: 11px 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+button:disabled { opacity: .45; cursor: not-allowed; }
+.primary { background: var(--primary); color: #10182b; }
+.secondary { background: #2b3b5b; color: white; }
+.success { background: var(--green); color: #06271d; }
+.danger { background: #4a2638; color: #ffd8df; }
+header {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.brand { font-weight: 900; letter-spacing: .5px; }
+.brand span { color: var(--primary); }
+header small { color: var(--muted); }
+main { max-width: 1400px; margin: auto; padding: 22px; }
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+}
+.hidden { display: none !important; }
+h1,h2,h3,p { margin-top: 0; }
+h1 { font-size: clamp(26px, 4vw, 42px); }
+h2 { font-size: 22px; }
+p { line-height: 1.6; }
+.muted { color: var(--muted); }
+.pill {
+  display: inline-block;
+  background: #273656;
+  color: #cbd8ff;
+  padding: 6px 10px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 800;
+}
+#startScreen { max-width: 650px; margin: 5vh auto; }
+input, textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: #0b1326;
+  color: white;
+  padding: 12px;
+  border-radius: 9px;
+  outline: none;
+}
+input:focus, textarea:focus { border-color: var(--primary); }
+label { display: block; margin: 15px 0 7px; font-weight: 700; }
+#gameHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.progress-track {
+  height: 9px;
+  background: #26334d;
+  border-radius: 99px;
+  overflow: hidden;
+  margin: 12px 0 20px;
+}
+#progressBar {
+  width: 0;
+  height: 100%;
+  background: var(--green);
+  transition: width .25s;
+}
+.layout {
+  display: grid;
+  grid-template-columns: 290px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.bug-list { display: grid; gap: 8px; }
+.bug-item {
+  width: 100%;
+  background: var(--panel2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  text-align: left;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+}
+.bug-item.active { border-color: var(--primary); }
+.bug-item.fixed { border-color: #23785d; }
+.bug-item small { display: block; color: var(--muted); margin-top: 4px; }
+.editor-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+textarea#codeEditor {
+  min-height: 180px;
+  resize: vertical;
+  font: 14px/1.65 Consolas, Monaco, monospace;
+  tab-size: 2;
+  white-space: pre;
+}
+.actions { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 12px; }
+.feedback {
+  border-radius: 10px;
+  background: #0b1326;
+  padding: 13px;
+  margin-top: 13px;
+  line-height: 1.6;
+}
+.feedback.good { border: 1px solid #258563; }
+.feedback.bad { border: 1px solid #914253; }
+.preview {
+  background: white;
+  color: #202838;
+  border-radius: 10px;
+  padding: 16px;
+  margin-top: 12px;
+  min-height: 95px;
+  overflow: auto;
+}
+.preview button, .preview a { cursor: default; }
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 15px 0;
+}
+.stat { background: var(--panel2); border-radius: 12px; padding: 15px; }
+.stat strong { font-size: 25px; display: block; margin-top: 5px; }
+#resultScreen { max-width: 900px; margin: 20px auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.table-wrap { overflow-x: auto; }
+footer { text-align: center; padding: 22px; color: var(--muted); font-size: 12px; }
+@media (max-width: 850px) {
+  .layout { grid-template-columns: 1fr; }
+  .bug-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  main { padding: 13px; }
+}
+@media (max-width: 480px) {
+  .bug-list { grid-template-columns: 1fr; }
+  .stats { grid-template-columns: 1fr; }
+  header { padding: 14px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">🐞 CODE<span>LAB</span> / DEBUGGING</div>
+  <small>SMK Kelas XI RPL · Level 4 · 15 Tantangan</small>
+</header>
+
+<main>
+  <section id="startScreen" class="panel">
+    <span class="pill">LEVEL 4 · MENENGAH–LANJUTAN</span>
+    <h1>CSS & HTML<br>Debugging Challenge</h1>
+    <p class="muted">Temukan kesalahan kode, perbaiki, lalu uji jawabanmu. Ada 10 tantangan CSS dan 5 tantangan HTML.</p>
+    <div class="stats">
+      <div class="stat"><span class="muted">Tantangan</span><strong>15</strong></div>
+      <div class="stat"><span class="muted">Nilai maksimum</span><strong>100</strong></div>
+      <div class="stat"><span class="muted">Kategori</span><strong>CSS + HTML</strong></div>
+    </div>
+    <label for="studentName">Nama lengkap siswa</label>
+    <input id="studentName" maxlength="100" placeholder="Masukkan nama lengkap..." autocomplete="name">
+    <p class="muted" style="margin-top:12px">Perbaiki kode pada editor, lalu tekan <b>Uji Perbaikan</b>. Kamu bisa mengirim progress sebelum menyelesaikan semua tantangan.</p>
+    <button id="startBtn" class="primary" style="width:100%">Mulai Tantangan →</button>
+    <p id="startMessage" class="muted" style="margin:12px 0 0"></p>
+  </section>
+
+  <section id="gameScreen" class="hidden">
+    <div id="gameHeader">
+      <div>
+        <div class="pill" id="studentPill">Siswa</div>
+        <h2 style="margin:9px 0 0">Ruang Debugging</h2>
+      </div>
+      <div>
+        <span class="muted">Tantangan </span><b id="currentCount">1 / 15</b>
+        &nbsp; · &nbsp;
+        <span class="muted">Nilai </span><b id="scoreNow">0 / 100</b>
+      </div>
+    </div>
+    <div class="progress-track"><div id="progressBar"></div></div>
+
+    <div class="layout">
+      <aside class="panel">
+        <h3>Daftar Masalah</h3>
+        <p class="muted" style="font-size:13px">Pilih tantangan untuk membuka kode yang perlu diperbaiki.</p>
+        <div id="bugList" class="bug-list"></div>
+        <div class="actions">
+          <button id="sendProgressBtn" class="secondary">Kirim Progress</button>
+        </div>
+        <p id="sendStatus" class="muted" style="font-size:12px;margin:10px 0 0"></p>
+      </aside>
+
+      <section class="panel">
+        <div class="editor-head">
+          <div>
+            <span id="bugCategory" class="pill">CSS</span>
+            <h2 id="bugTitle" style="margin:10px 0">Judul tantangan</h2>
+          </div>
+          <span id="bugStatus" class="muted">Belum diperbaiki</span>
+        </div>
+        <p id="bugDescription" class="muted"></p>
+
+        <label for="codeEditor">Editor Kode</label>
+        <textarea id="codeEditor" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+        <div class="actions">
+          <button id="checkBtn" class="primary">✓ Uji Perbaikan</button>
+          <button id="resetBtn" class="secondary">Reset Kode</button>
+          <button id="nextBtn" class="secondary">Tantangan Berikutnya →</button>
+        </div>
+        <div id="feedback" class="feedback" aria-live="polite">Baca instruksi, perbaiki kode, lalu uji jawabanmu.</div>
+        <h3 style="margin:22px 0 8px">Pratinjau Konsep</h3>
+        <div id="preview" class="preview">Pratinjau akan menampilkan contoh hasil perbaikan.</div>
+      </section>
+    </div>
+  </section>
+
+  <section id="resultScreen" class="panel hidden">
+    <span class="pill">HASIL AKHIR</span>
+    <h1>Tantangan Selesai 🎉</h1>
+    <p id="resultIntro" class="muted"></p>
+    <div class="stats">
+      <div class="stat"><span class="muted">Nilai akhir</span><strong id="finalScore">0 / 100</strong></div>
+      <div class="stat"><span class="muted">Bug diperbaiki</span><strong id="finalFixed">0 / 15</strong></div>
+      <div class="stat"><span class="muted">Progress</span><strong id="finalProgress">0%</strong></div>
+    </div>
+    <h2>Rangkuman Penyelesaian</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Tantangan</th><th>Status</th><th>Penjelasan</th></tr></thead>
+        <tbody id="summaryBody"></tbody>
+      </table>
+    </div>
+    <div class="actions">
+      <button id="finalSendBtn" class="success">Kirim Hasil Akhir</button>
+      <button id="restartBtn" class="secondary">Mulai Ulang</button>
+    </div>
+    <p id="finalSendStatus" class="muted" aria-live="polite"></p>
+  </section>
+</main>
+<footer>CODELAB · Latihan praktik HTML dan CSS · Gunakan kode sebagai sarana belajar.</footer>
+
+<script>
+/*
+ * WAJIB: ganti URL berikut dengan URL Web App Apps Script
+ * milikmu yang berakhiran /exec.
+ */
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxupfDlXBWLAMxYWFNPqNxfeeE5hbMvY9N7OlC8RU26rjaBYA7_q3fRNyIGYcHwWNw5/exec";
+
+/*
+ * Pemeriksaan dilakukan terhadap kode yang sudah dinormalisasi.
+ * Setiap tantangan meminta siswa memperbaiki satu potongan kode.
+ */
+const challenges = [
+  {
+    category:"CSS", title:"Grid Responsif",
+    description:"Properti grid-template-columns harus membuat tiga kolom yang dapat menyesuaikan ukuran layar.",
+    broken:".cards {\n  display: grid;\n  grid-template-columns: repeat(3, 1fr);\n  gap: 16px;\n}",
+    fixed:".cards {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));\n  gap: 16px;\n}",
+    explanation:"auto-fit dan minmax() membantu kartu menyesuaikan jumlah kolom berdasarkan lebar ruang yang tersedia.",
+    preview:"grid"
+  },
+  {
+    category:"CSS", title:"Gambar Tidak Tergunting",
+    description:"Gambar harus memenuhi kotak tanpa berubah bentuk. Perbaiki nilai object-fit.",
+    broken:".thumbnail {\n  width: 100%;\n  height: 180px;\n  object-fit: fill;\n}",
+    fixed:".thumbnail {\n  width: 100%;\n  height: 180px;\n  object-fit: cover;\n}",
+    explanation:"object-fit: cover mempertahankan rasio gambar sambil mengisi kotak; sebagian gambar dapat terpotong.",
+    preview:"image"
+  },
+  {
+    category:"CSS", title:"Konten Meluap",
+    description:"Kartu harus menyembunyikan bagian konten yang melampaui batasnya.",
+    broken:".card {\n  border-radius: 12px;\n  overflow: visible;\n}",
+    fixed:".card {\n  border-radius: 12px;\n  overflow: hidden;\n}",
+    explanation:"overflow: hidden menyembunyikan konten yang keluar dari batas elemen, termasuk di sudut kartu membulat.",
+    preview:"overflow"
+  },
+  {
+    category:"CSS", title:"Transisi Tombol",
+    description:"Animasi perubahan warna sebaiknya ditulis pada aturan dasar tombol, bukan hanya saat hover.",
+    broken:".button:hover {\n  background: #2563eb;\n  transition: background 0.3s ease;\n}",
+    fixed:".button {\n  transition: background 0.3s ease;\n}\n.button:hover {\n  background: #2563eb;\n}",
+    explanation:"Transisi pada aturan dasar membuat perubahan masuk dan keluar dari kondisi hover sama-sama halus.",
+    preview:"button"
+  },
+  {
+    category:"CSS", title:"Fokus Input Form",
+    description:"Saat input dipilih dengan keyboard atau diklik, tampilkan indikator fokus yang jelas.",
+    broken:"input:focus {\n  outline: none;\n  border-color: #64748b;\n}",
+    fixed:"input:focus {\n  outline: 2px solid #2563eb;\n  outline-offset: 2px;\n  border-color: #2563eb;\n}",
+    explanation:"Indikator fokus membantu pengguna keyboard mengetahui elemen yang sedang dipilih. Jangan menghilangkannya tanpa pengganti.",
+    preview:"input"
+  },
+  {
+    category:"CSS", title:"Navigasi Membungkus",
+    description:"Navigasi harus dapat membungkus item ketika ruang horizontal tidak cukup.",
+    broken:".nav-links {\n  display: flex;\n  flex-wrap: nowrap;\n  gap: 12px;\n}",
+    fixed:".nav-links {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 12px;\n}",
+    explanation:"flex-wrap: wrap memungkinkan item berpindah ke baris berikutnya saat ruang tidak cukup.",
+    preview:"nav"
+  },
+  {
+    category:"CSS", title:"Kontras Tautan Hero",
+    description:"Tautan pada latar gelap sulit dibaca karena warnanya terlalu gelap. Perbaiki warna tautan.",
+    broken:".hero a {\n  color: #222222;\n  background: #172554;\n}",
+    fixed:".hero a {\n  color: #ffffff;\n  background: #172554;\n}",
+    explanation:"Teks yang terang di atas latar gelap meningkatkan keterbacaan. Periksa kontras untuk kebutuhan aksesibilitas.",
+    preview:"link"
+  },
+  {
+    category:"CSS", title:"Ukuran Input Konsisten",
+    description:"Input dengan padding dan border harus tetap mengikuti lebar elemen yang ditentukan.",
+    broken:"input {\n  width: 100%;\n  padding: 12px;\n  border: 2px solid #94a3b8;\n  box-sizing: content-box;\n}",
+    fixed:"input {\n  width: 100%;\n  padding: 12px;\n  border: 2px solid #94a3b8;\n  box-sizing: border-box;\n}",
+    explanation:"box-sizing: border-box memasukkan padding dan border ke dalam lebar total elemen.",
+    preview:"input"
+  },
+  {
+    category:"CSS", title:"Media Query",
+    description:"Perbaiki kondisi media query agar aturan berlaku pada layar selebar 600 piksel atau lebih kecil.",
+    broken:"@media (min-width: 600px) {\n  .sidebar {\n    display: none;\n  }\n}",
+    fixed:"@media (max-width: 600px) {\n  .sidebar {\n    display: none;\n  }\n}",
+    explanation:"max-width: 600px berarti aturan berlaku pada layar dengan lebar maksimum 600 piksel.",
+    preview:"media"
+  },
+  {
+    category:"CSS", title:"Efek Hover Tombol",
+    description:"Tombol harus berubah warna ketika penunjuk diarahkan ke atasnya. Gunakan selector hover.",
+    broken:".submit:focus {\n  background: #15803d;\n}",
+    fixed:".submit:hover {\n  background: #15803d;\n}",
+    explanation:":hover aktif saat penunjuk berada di atas elemen. :focus digunakan untuk kondisi elemen mendapat fokus.",
+    preview:"button"
+  },
+  {
+    category:"HTML", title:"Tag Heading Tidak Cocok",
+    description:"Tag heading dibuka sebagai h2 tetapi ditutup sebagai h3. Samakan tag pembukanya dan penutupnya.",
+    broken:"<h2>Profil Siswa</h3>",
+    fixed:"<h2>Profil Siswa</h2>",
+    explanation:"Tag pembuka dan penutup harus sesuai agar struktur HTML terbentuk dengan benar.",
+    preview:"heading"
+  },
+  {
+    category:"HTML", title:"Teks Alternatif Gambar",
+    description:"Gambar informasi harus mempunyai atribut alt yang menjelaskan isi atau fungsi gambar.",
+    broken:'<img src="logo-sekolah.png">',
+    fixed:'<img src="logo-sekolah.png" alt="Logo sekolah">',
+    explanation:"Atribut alt membantu pembaca layar dan memberi teks pengganti jika gambar tidak dapat ditampilkan.",
+    preview:"alt"
+  },
+  {
+    category:"HTML", title:"Label dan Input",
+    description:"Hubungkan label dengan input menggunakan atribut for dan id yang nilainya sama.",
+    broken:'<label for="email">Email</label>\n<input type="email" id="alamat">',
+    fixed:'<label for="email">Email</label>\n<input type="email" id="email">',
+    explanation:"Nilai for pada label harus sama dengan id input agar label terhubung dengan kontrol form yang benar.",
+    preview:"form"
+  },
+  {
+    category:"HTML", title:"Tipe Tombol Form",
+    description:"Tombol untuk tindakan yang bukan pengiriman form harus menggunakan type button.",
+    broken:'<form>\n  <button type="submit">Tampilkan Bantuan</button>\n</form>',
+    fixed:'<form>\n  <button type="button">Tampilkan Bantuan</button>\n</form>',
+    explanation:"Tombol di dalam form secara default dapat bertindak sebagai submit. Gunakan type=\"button\" untuk tindakan biasa.",
+    preview:"form"
+  },
+  {
+    category:"HTML", title:"Tautan Proyek",
+    description:"Tautan proyek harus mengarah ke ID bagian proyek yang benar, yaitu #proyek.",
+    broken:'<a href="#project">Lihat Proyek</a>\n<section id="proyek">Daftar Proyek</section>',
+    fixed:'<a href="#proyek">Lihat Proyek</a>\n<section id="proyek">Daftar Proyek</section>',
+    explanation:"Fragmen pada href harus cocok dengan id tujuan. Perbedaan ejaan membuat tautan tidak menuju bagian yang dimaksud.",
+    preview:"link"
+  }
+];
+
+const state = {
+  name:"",
+  index:0,
+  fixed:new Set(),
+  startedAt:null,
+  sentFinal:false,
+  sending:false,
+  lastEdited:{}
+};
+
+const $ = id => document.getElementById(id);
+const normalize = text => String(text)
+  .replace(/\r\n/g,"\n")
+  .split("\n")
+  .map(line => line.trim())
+  .filter(line => line.length > 0)
+  .join("\n")
+  .replace(/\s*([{}:;,])\s*/g,"$1")
+  .replace(/\s+/g," ")
+  .trim();
+
+function getProgress() {
+  return Math.round(state.fixed.size / challenges.length * 100);
+}
+function getScore() {
+  return Math.round(state.fixed.size / challenges.length * 100);
+}
+function elapsedTime() {
+  if (!state.startedAt) return "0 detik";
+  const seconds = Math.max(0, Math.floor((Date.now()-state.startedAt)/1000));
+  const min = Math.floor(seconds/60);
+  const sec = seconds%60;
+  return min ? `${min} menit ${sec} detik` : `${sec} detik`;
+}
+function isFixed(index) {
+  return state.fixed.has(index);
+}
+
+function startGame() {
+  const name = $("studentName").value.trim();
+  if (!name) {
+    $("startMessage").textContent = "Masukkan nama siswa terlebih dahulu.";
+    $("studentName").focus();
+    return;
+  }
+  if (GOOGLE_SCRIPT_URL.includes("PASTE_URL") ||
+      !/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(GOOGLE_SCRIPT_URL)) {
+    $("startMessage").textContent =
+      "URL Apps Script belum diisi. Ganti GOOGLE_SCRIPT_URL dengan URL Web App berakhiran /exec sebelum memulai.";
+    return;
+  }
+  state.name = name;
+  state.startedAt = Date.now();
+  $("studentPill").textContent = "Siswa: " + name;
+  $("startScreen").classList.add("hidden");
+  $("gameScreen").classList.remove("hidden");
+  renderBugList();
+  openChallenge(0);
+  updateProgress();
+}
+
+function renderBugList() {
+  const list = $("bugList");
+  list.innerHTML = "";
+  challenges.forEach((challenge, i) => {
+    const btn = document.createElement("button");
+    btn.className = "bug-item" +
+      (i === state.index ? " active" : "") +
+      (isFixed(i) ? " fixed" : "");
+    btn.innerHTML = `<span><b>${i+1}. ${escapeHtml(challenge.title)}</b><small>${challenge.category} · ${isFixed(i) ? "Selesai" : "Belum selesai"}</small></span><span>${isFixed(i) ? "✓" : "›"}</span>`;
+    btn.addEventListener("click", () => openChallenge(i));
+    list.appendChild(btn);
+  });
+}
+
+function openChallenge(index) {
+  state.index = index;
+  const c = challenges[index];
+  $("bugCategory").textContent = c.category;
+  $("bugTitle").textContent = `${index+1}. ${c.title}`;
+  $("bugDescription").textContent = c.description;
+  $("codeEditor").value = state.lastEdited[index] ??
+    (isFixed(index) ? c.fixed : c.broken);
+  $("bugStatus").textContent = isFixed(index) ? "✓ Sudah diperbaiki" : "Belum diperbaiki";
+  $("feedback").className = "feedback";
+  $("feedback").textContent = isFixed(index)
+    ? "Tantangan ini sudah benar. Kamu bisa mempelajari penjelasannya atau lanjut ke tantangan lain."
+    : "Perbaiki kode pada editor, kemudian tekan Uji Perbaikan.";
+  $("checkBtn").textContent = isFixed(index) ? "Uji Ulang" : "✓ Uji Perbaikan";
+  renderPreview(c.preview);
+  renderBugList();
+  updateProgress();
+}
+
+function checkFix() {
+  const c = challenges[state.index];
+  const entered = $("codeEditor").value;
+  state.lastEdited[state.index] = entered;
+
+  if (normalize(entered) === normalize(c.fixed)) {
+    state.fixed.add(state.index);
+    $("feedback").className = "feedback good";
+    $("feedback").innerHTML = "<b>✓ Benar! Kode sudah sesuai.</b><br>" + escapeHtml(c.explanation);
+    $("bugStatus").textContent = "✓ Sudah diperbaiki";
+    $("checkBtn").textContent = "Uji Ulang";
+    renderBugList();
+    updateProgress();
+
+    if (state.fixed.size === challenges.length && !state.sentFinal) {
+      state.sentFinal = true;
+      setTimeout(showResults, 700);
+      setTimeout(() => sendData(true), 1000);
+    }
+  } else {
+    $("feedback").className = "feedback bad";
+    $("feedback").innerHTML =
+      "<b>Belum tepat.</b><br>Bandingkan kembali nama properti, nilai, tanda baca, tag pembuka, dan tag penutup. Baca instruksi sekali lagi.";
+  }
+}
+
+function resetCode() {
+  const c = challenges[state.index];
+  if (isFixed(state.index)) {
+    $("feedback").className = "feedback good";
+    $("feedback").textContent = "Tantangan ini sudah selesai. Reset tidak menghapus status keberhasilan.";
+    return;
+  }
+  $("codeEditor").value = c.broken;
+  state.lastEdited[state.index] = c.broken;
+  $("feedback").className = "feedback";
+  $("feedback").textContent = "Kode dikembalikan ke kondisi awal.";
+}
+
+function updateProgress() {
+  const progress = getProgress();
+  $("progressBar").style.width = progress + "%";
+  $("currentCount").textContent = `${state.index+1} / ${challenges.length}`;
+  $("scoreNow").textContent = `${getScore()} / 100`;
+}
+
+function renderPreview(type) {
+  const preview = $("preview");
+  preview.innerHTML = "";
+  if (type === "grid") {
+    const grid = document.createElement("div");
+    grid.style.cssText = "display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px";
+    ["Kartu 1","Kartu 2","Kartu 3"].forEach(t => {
+      const item = document.createElement("div");
+      item.textContent = t;
+      item.style.cssText = "padding:20px 8px;background:#dbeafe;border-radius:8px;text-align:center";
+      grid.appendChild(item);
+    });
+    preview.appendChild(grid);
+  } else if (type === "image") {
+    const box = document.createElement("div");
+    box.textContent = "Area gambar · object-fit: cover";
+    box.style.cssText = "height:130px;background:linear-gradient(120deg,#60a5fa,#312e81);color:white;display:grid;place-items:center;border-radius:8px";
+    preview.appendChild(box);
+  } else if (type === "overflow") {
+    const box = document.createElement("div");
+    box.textContent = "Kartu dengan konten di dalam batasnya";
+    box.style.cssText = "height:70px;overflow:hidden;border-radius:12px;background:#dbeafe;padding:18px";
+    preview.appendChild(box);
+  } else if (type === "button") {
+    const b = document.createElement("button");
+    b.textContent = "Contoh tombol";
+    b.style.cssText = "background:#2563eb;color:white;padding:12px;border-radius:8px";
+    preview.appendChild(b);
+  } else if (type === "input" || type === "form") {
+    const label = document.createElement("label");
+    label.textContent = "Contoh input";
+    label.style.cssText = "display:block;margin-bottom:6px";
+    const input = document.createElement("input");
+    input.placeholder = "Klik untuk mencoba fokus";
+    input.style.cssText = "width:100%;padding:10px;border:2px solid #2563eb;border-radius:6px;box-sizing:border-box;color:#111";
+    preview.append(label,input);
+  } else if (type === "nav") {
+    const nav = document.createElement("div");
+    nav.style.cssText = "display:flex;flex-wrap:wrap;gap:8px";
+    ["Beranda","Profil","Proyek","Kontak"].forEach(t => {
+      const item = document.createElement("span");
+      item.textContent = t;
+      item.style.cssText = "background:#dbeafe;padding:9px;border-radius:6px";
+      nav.appendChild(item);
+    });
+    preview.appendChild(nav);
+  } else if (type === "link") {
+    const a = document.createElement("a");
+    a.href = "#";
+    a.textContent = "Contoh tautan";
+    a.style.cssText = "display:inline-block;background:#172554;color:white;padding:12px;border-radius:6px";
+    preview.style.background = "#172554";
+    preview.appendChild(a);
+  } else if (type === "media") {
+    const box = document.createElement("div");
+    box.textContent = "Pada layar kecil, sidebar dapat disembunyikan.";
+    box.style.cssText = "padding:16px;background:#dbeafe;border-radius:8px";
+    preview.appendChild(box);
+  } else if (type === "heading") {
+    const h = document.createElement("h2");
+    h.textContent = "Profil Siswa";
+    preview.appendChild(h);
+  } else if (type === "alt") {
+    const p = document.createElement("p");
+    p.textContent = "Gambar perlu memiliki teks alternatif yang bermakna.";
+    preview.appendChild(p);
+  }
+}
+
+function escapeHtml(text) {
+  return String(text).replace(/[&<>"']/g, ch => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[ch]);
+}
+
+function buildPayload() {
+  const details = challenges.map((c,i) => ({
+    nomor: i+1,
+    kategori: c.category,
+    tantangan: c.title,
+    status: isFixed(i) ? "Benar" : "Belum selesai",
+    penjelasan: c.explanation
+  }));
+  return {
+    nama: state.name,
+    progress: getProgress(),
+    bugBenar: state.fixed.size,
+    totalBug: challenges.length,
+    status: state.fixed.size === challenges.length ? "Selesai" : "Dalam Proses",
+    waktuGame: elapsedTime(),
+    detail: JSON.stringify(details)
+  };
+}
+
+/*
+ * Backend menggunakan doPost(e) dan menerima JSON dari
+ * e.postData.contents. text/plain membuat payload dapat
+ * dikirim tanpa preflight CORS. Mode no-cors berarti browser
+ * tidak dapat membaca respons server; notifikasi bukan bukti
+ * pasti bahwa baris sudah tersimpan.
+ */
+async function sendData(final = false) {
+  if (state.sending) return;
+  if (!state.name) return;
+
+  if (!GOOGLE_SCRIPT_URL ||
+      GOOGLE_SCRIPT_URL.includes("PASTE_URL") ||
+      !GOOGLE_SCRIPT_URL.endsWith("/exec")) {
+    const message = "URL Apps Script belum benar. Gunakan URL Web App yang berakhiran /exec.";
+    $("sendStatus").textContent = message;
+    $("finalSendStatus").textContent = message;
+    return;
+  }
+
+  state.sending = true;
+  const payload = buildPayload();
+  const target = final ? $("finalSendStatus") : $("sendStatus");
+  target.textContent = "Mengirim data...";
+
+  try {
+    await fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    });
+
+    target.textContent =
+      "Permintaan pengiriman telah dikirim. Periksa Google Sheets dan Apps Script → Executions untuk memastikan data tersimpan.";
+  } catch (error) {
+    target.textContent =
+      "Pengiriman gagal dari browser: " + error.message +
+      ". Periksa koneksi internet dan URL Apps Script.";
+  } finally {
+    state.sending = false;
+  }
+}
+
+function showResults() {
+  $("gameScreen").classList.add("hidden");
+  $("resultScreen").classList.remove("hidden");
+  $("resultIntro").textContent = `Nama: ${state.name} · Waktu pengerjaan: ${elapsedTime()}`;
+  $("finalScore").textContent = `${getScore()} / 100`;
+  $("finalFixed").textContent = `${state.fixed.size} / ${challenges.length}`;
+  $("finalProgress").textContent = getProgress() + "%";
+
+  const body = $("summaryBody");
+  body.innerHTML = "";
+  challenges.forEach((c,i) => {
+    const tr = document.createElement("tr");
+    const values = [
+      String(i+1),
+      `${c.category}: ${c.title}`,
+      isFixed(i) ? "✓ Benar" : "Belum selesai",
+      c.explanation
+    ];
+    values.forEach(value => {
+      const td = document.createElement("td");
+      td.textContent = value;
+      tr.appendChild(td);
+    });
+    body.appendChild(tr);
+  });
+}
+
+function goNext() {
+  if (state.index < challenges.length - 1) {
+    openChallenge(state.index + 1);
+  } else if (state.fixed.size === challenges.length) {
+    showResults();
+  } else {
+    $("feedback").className = "feedback";
+    $("feedback").textContent = "Ini tantangan terakhir. Kamu dapat memilih tantangan yang belum selesai pada daftar di sebelah kiri.";
+  }
+}
+
+function restartGame() {
+  if (!confirm("Mulai ulang? Progress pada sesi ini akan direset.")) return;
+  state.index = 0;
+  state.fixed = new Set();
+  state.startedAt = Date.now();
+  state.lastEdited = {};
+  state.sentFinal = false;
+  state.sending = false;
+  $("resultScreen").classList.add("hidden");
+  $("gameScreen").classList.remove("hidden");
+  renderBugList();
+  openChallenge(0);
+  $("sendStatus").textContent = "";
+  $("finalSendStatus").textContent = "";
+}
+
+$("startBtn").addEventListener("click", startGame);
+$("studentName").addEventListener("keydown", e => {
+  if (e.key === "Enter") startGame();
+});
+$("checkBtn").addEventListener("click", checkFix);
+$("resetBtn").addEventListener("click", resetCode);
+$("nextBtn").addEventListener("click", goNext);
+$("sendProgressBtn").addEventListener("click", () => sendData(false));
+$("finalSendBtn").addEventListener("click", () => sendData(true));
+$("restartBtn").addEventListener("click", restartGame);
+</script>
+</body>
+</html>
